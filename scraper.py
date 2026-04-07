@@ -57,7 +57,7 @@ def parse_price(price_str):
 
 def get_min_price(card_id, condition_id):
     """
-    Fetch listings for a card/condition and return the minimum price (USD).
+    Fetch listings for a card/condition and return (min_price_usd, thumbnail_url).
     Prefers active (unsold) listings; falls back to all listings if none found.
     """
     url = f"https://snkrdunk.com/en/v1/trading-cards/{card_id}/used-listings"
@@ -72,17 +72,20 @@ def get_min_price(card_id, condition_id):
         r = requests.get(url, params=params, headers=HEADERS, timeout=15)
         if r.status_code == 404:
             print(f"    Card {card_id} not found (404)")
-            return None
+            return None, None
         r.raise_for_status()
 
         data = r.json()
         listings = data.get("usedTradingCards", [])
         if not listings:
-            return None
+            return None, None
 
         # Prefer unsold (active) listings for current asking price
         active = [l for l in listings if not l.get("isSold", True)]
         pool = active if active else listings
+
+        # Grab thumbnail from first listing
+        thumbnail_url = listings[0].get("thumbnailUrl")
 
         prices = []
         for listing in pool:
@@ -90,14 +93,14 @@ def get_min_price(card_id, condition_id):
             if p is not None:
                 prices.append(p)
 
-        return min(prices) if prices else None
+        return (min(prices) if prices else None), thumbnail_url
 
     except requests.RequestException as e:
         print(f"    Request error: {e}")
-        return None
+        return None, None
     except (json.JSONDecodeError, KeyError) as e:
         print(f"    Parse error: {e}")
-        return None
+        return None, None
 
 
 def load_json(filepath, default):
@@ -127,6 +130,8 @@ def main():
     # Track which (date, card_id) combos we already have to avoid duplicates
     existing_keys = {(p["date"], p["card_id"]) for p in all_prices}
     new_entries = []
+    # Track thumbnail updates per card
+    thumbnail_updates = {}
 
     for card in cards:
         card_id = card["id"]
@@ -143,12 +148,17 @@ def main():
             "card_name": card_name,
         }
 
+        card_thumbnail = None
         for condition_key, condition_id in CONDITION_IDS.items():
             label = {"condition_a": "品相A", "psa_9": "PSA 9", "psa_10": "PSA 10"}[condition_key]
             print(f"  {label} (conditionId={condition_id})... ", end="", flush=True)
 
-            min_usd = get_min_price(card_id, condition_id)
+            min_usd, thumb = get_min_price(card_id, condition_id)
             time.sleep(0.5)  # polite delay
+
+            # Save first thumbnail we get for this card
+            if thumb and not card_thumbnail:
+                card_thumbnail = thumb
 
             if min_usd is not None:
                 twd = round(min_usd * twd_rate)
@@ -158,6 +168,9 @@ def main():
                 entry[condition_key] = None
                 print("No listings")
 
+        if card_thumbnail:
+            thumbnail_updates[card_id] = card_thumbnail
+
         new_entries.append(entry)
         print()
 
@@ -166,7 +179,20 @@ def main():
         with open(PRICES_FILE, "w", encoding="utf-8") as f:
             json.dump(all_prices, f, ensure_ascii=False, indent=2)
         print(f"Saved {len(new_entries)} new record(s). Total: {len(all_prices)} records.")
-    else:
+
+    # Update thumbnail_url in cards.json
+    if thumbnail_updates:
+        updated = False
+        for card in cards:
+            if card["id"] in thumbnail_updates:
+                card["thumbnail_url"] = thumbnail_updates[card["id"]]
+                updated = True
+        if updated:
+            with open(CARDS_FILE, "w", encoding="utf-8") as f:
+                json.dump(cards, f, ensure_ascii=False, indent=2)
+            print(f"Updated thumbnails for {len(thumbnail_updates)} card(s).")
+
+    if not new_entries and not thumbnail_updates:
         print("No new data to save.")
 
 

@@ -3,9 +3,17 @@ Pokemon Card Price Tracker - Flask Web App
 """
 import json
 import os
-from flask import Flask, render_template, abort
+import requests
+from flask import Flask, render_template, abort, request, jsonify
 
 app = Flask(__name__)
+
+SNKRDUNK_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://snkrdunk.com/en/brands/pokemon/trading-cards",
+}
 
 
 def load_json(filepath, default=None):
@@ -50,6 +58,7 @@ def index():
         card_data.append({
             "id": cid,
             "name": card["name"],
+            "thumbnail_url": card.get("thumbnail_url"),
             "latest": latest,
             "condition_a_twd": latest["condition_a"]["twd"] if latest and latest.get("condition_a") else None,
             "psa_9_twd": latest["psa_9"]["twd"] if latest and latest.get("psa_9") else None,
@@ -90,7 +99,47 @@ def card_detail(card_id):
         latest=latest,
         fmt_twd=fmt_twd,
         has_data=bool(card_prices),
+        data_points=len(card_prices),
     )
+
+
+@app.route("/search")
+def search():
+    q = request.args.get("q", "").strip()
+    results = []
+    error = None
+    if q:
+        try:
+            r = requests.get(
+                "https://snkrdunk.com/en/v1/trading-cards",
+                params={"keyword": q, "brandId": "pokemon", "perPage": 20, "page": 1},
+                headers=SNKRDUNK_HEADERS,
+                timeout=10,
+            )
+            if r.ok:
+                results = r.json().get("tradingCards", [])
+        except requests.RequestException:
+            error = "無法連線到 Snkrdunk，請稍後再試"
+    return render_template("search.html", results=results, query=q, error=error)
+
+
+@app.route("/api/popular")
+def popular_cards():
+    try:
+        r = requests.get(
+            "https://snkrdunk.com/en/v1/trading-cards",
+            params={"brandId": "pokemon", "sortType": "popular", "perPage": 30, "page": 1},
+            headers=SNKRDUNK_HEADERS,
+            timeout=10,
+        )
+        if r.ok:
+            cards = r.json().get("tradingCards", [])
+            # Filter for cards with actual prices
+            cards_with_price = [c for c in cards if c.get("minPrice", 0) > 0]
+            return jsonify(cards_with_price[:8])
+    except requests.RequestException:
+        pass
+    return jsonify([])
 
 
 if __name__ == "__main__":
