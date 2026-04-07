@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Pokémon Card Tracker — 價格追蹤{% endblock %}
+
+{% block head %}
+<style>
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-bottom: 2.5rem;
+  }
+  .page-header h1 {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+  .page-header h1 span {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-header p {
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  /* ── CARD GRID ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* ── POKEMON CARD ── */
+  .poke-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .poke-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top right, rgba(251,191,36,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .poke-card:hover {
+    border-color: var(--border-glow);
+    box-shadow: 0 0 0 1px var(--border-glow), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-2px);
+  }
+
+  .poke-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .poke-card-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    flex: 1;
+  }
+  .poke-card-id {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── PRICE ROWS ── */
+  .price-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .price-row-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .price-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-blue  { background: var(--blue);  box-shadow: 0 0 6px var(--blue);  }
+  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-gold  { background: var(--gold);  box-shadow: 0 0 6px var(--gold);  }
+
+  .price-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .price-value.blue  { color: var(--blue);  }
+  .price-value.green { color: var(--green); }
+  .price-value.gold  { color: var(--gold);  }
+  .price-value.muted { color: var(--text-muted); font-weight: 400; font-size: 0.85rem; }
+
+  .poke-card-footer {
+    margin-top: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .updated-at {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .view-btn {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-dim);
+  }
+  .empty-state .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  .empty-state h2 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text); }
+  .empty-state code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--accent);
+  }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 0.15rem; }
+  .stat-label { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.07em; text-transform: uppercase; }
+  .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .stat-value span { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .stats-bar { gap: 1rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>寶可夢卡牌 <span>價格追蹤</span></h1>
+  <p>即時追蹤 Snkrdunk 平台上的卡牌市場價格 · 品相A / PSA 9 / PSA 10</p>
+</div>
+
+{% set total_cards = cards | length %}
+{% set cards_with_data = cards | selectattr('date') | list | length %}
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-label">追蹤卡牌</div>
+    <div class="stat-value"><span>{{ total_cards }}</span> 張</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">有價格資料</div>
+    <div class="stat-value"><span>{{ cards_with_data }}</span> 張</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">最後更新</div>
+    <div class="stat-value" style="font-size:0.9rem">
+      {% if cards_with_data > 0 %}
+        {% set last_date = cards | selectattr('date') | map(attribute='date') | max %}
+        <span>{{ last_date }}</span>
+      {% else %}
+        <span style="color:var(--text-muted)">尚未更新</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card-grid">
+  {% for card in cards %}
+  <a href="/card/{{ card.id }}" class="poke-card">
+    <div class="poke-card-header">
+      <div class="poke-card-name">{{ card.name }}</div>
+      <div class="poke-card-id">#{{ card.id }}</div>
+    </div>
+
+    <div class="price-rows">
+      <div class="price-row">
+        <div class="price-row-label">
+          <div class="price-dot dot-blue"></div>
+          品相 A（裸卡）
+        </div>
+        <div class="price-value {% if card.condition_a_twd %}blue{% else %}muted{% endif %}">
+          {% if card.condition_a_twd %}NT${{ '{:,}'.format(card.condition_a_twd) }}{% else %}— 無資料{% endif %}
+        </div>
+      </div>
+
+      <div class="price-row">
+        <div class="price-row-label">
+          <div class="price-dot dot-green"></div>
+          PSA 9
+        </div>
+        <div class="price-value {% if card.psa_9_twd %}green{% else %}muted{% endif %}">
+          {% if card.psa_9_twd %}NT${{ '{:,}'.format(card.psa_9_twd) }}{% else %}— 無資料{% endif %}
+        </div>
+      </div>
+
+      <div class="price-row">
+        <div class="price-row-label">
+          <div class="price-dot dot-gold"></div>
+          PSA 10
+        </div>
+        <div class="price-value {% if card.psa_10_twd %}gold{% else %}muted{% endif %}">
+          {% if card.psa_10_twd %}NT${{ '{:,}'.format(card.psa_10_twd) }}{% else %}— 無資料{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="poke-card-footer">
+      <div class="updated-at">
+        {% if card.date %}更新於 {{ card.date }}{% else %}尚未抓取資料{% endif %}
+      </div>
+      <div class="view-btn">查看走勢圖 →</div>
+    </div>
+  </a>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📦</div>
+    <h2>尚無卡牌資料</h2>
+    <p>請先執行爬蟲抓取資料</p>
+    <code>python scraper.py</code>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

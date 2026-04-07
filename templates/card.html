@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}{{ card.name }} — Pokémon Card Tracker{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* ── BACK LINK ── */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 1.75rem;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--text); }
+
+  /* ── CARD HERO ── */
+  .card-hero {
+    margin-bottom: 2rem;
+  }
+  .card-hero h1 {
+    font-size: clamp(1.3rem, 3.5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+  .card-hero .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+  .card-hero .card-meta a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.8rem;
+  }
+  .card-hero .card-meta a:hover { text-decoration: underline; }
+
+  /* ── CURRENT PRICES ── */
+  .prices-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .price-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .price-card.blue::after  { background: linear-gradient(90deg, var(--blue), transparent); }
+  .price-card.green::after { background: linear-gradient(90deg, var(--green), transparent); }
+  .price-card.gold::after  { background: linear-gradient(90deg, var(--gold), transparent); }
+
+  .price-card-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .price-card.blue  .price-card-label { color: var(--blue);  }
+  .price-card.green .price-card-label { color: var(--green); }
+  .price-card.gold  .price-card-label { color: var(--gold);  }
+
+  .price-twd {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+  }
+  .price-card.blue  .price-twd { color: var(--blue);  }
+  .price-card.green .price-twd { color: var(--green); }
+  .price-card.gold  .price-twd { color: var(--gold);  }
+  .price-twd.na { color: var(--text-muted); font-size: 1rem; font-weight: 400; }
+
+  .price-usd {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── CHART ── */
+  .chart-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .chart-section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-dim);
+  }
+  .chart-section h2::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 18px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .chart-wrapper {
+    position: relative;
+    height: 320px;
+  }
+
+  /* ── NO DATA ── */
+  .no-data-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-dim);
+  }
+  .no-data-box .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .no-data-box h2 { color: var(--text); margin-bottom: 0.5rem; }
+  .no-data-box code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--accent);
+  }
+
+  /* ── LEGEND HINTS ── */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  @media (max-width: 640px) {
+    .prices-grid { grid-template-columns: 1fr; }
+    .price-twd { font-size: 1.3rem; }
+    .chart-wrapper { height: 240px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="/" class="back-link">← 回到列表</a>
+
+<div class="card-hero">
+  <h1>{{ card.name }}</h1>
+  <div class="card-meta">
+    <span>ID: #{{ card.id }}</span>
+    <span>·</span>
+    <a href="https://snkrdunk.com/en/trading-cards/{{ card.id }}" target="_blank" rel="noopener">
+      在 Snkrdunk 查看 ↗
+    </a>
+    {% if latest %}
+    <span>·</span>
+    <span>資料更新：{{ latest.date }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Current Prices -->
+<div class="prices-grid">
+  <div class="price-card blue">
+    <div class="price-card-label">● 品相 A（裸卡）</div>
+    {% if latest and latest.condition_a %}
+      <div class="price-twd">NT${{ '{:,}'.format(latest.condition_a.twd) }}</div>
+      <div class="price-usd">≈ US${{ '{:,.0f}'.format(latest.condition_a.usd) }}</div>
+    {% else %}
+      <div class="price-twd na">— 無資料</div>
+      <div class="price-usd">目前無上架</div>
+    {% endif %}
+  </div>
+
+  <div class="price-card green">
+    <div class="price-card-label">● PSA 9</div>
+    {% if latest and latest.psa_9 %}
+      <div class="price-twd">NT${{ '{:,}'.format(latest.psa_9.twd) }}</div>
+      <div class="price-usd">≈ US${{ '{:,.0f}'.format(latest.psa_9.usd) }}</div>
+    {% else %}
+      <div class="price-twd na">— 無資料</div>
+      <div class="price-usd">目前無上架</div>
+    {% endif %}
+  </div>
+
+  <div class="price-card gold">
+    <div class="price-card-label">● PSA 10</div>
+    {% if latest and latest.psa_10 %}
+      <div class="price-twd">NT${{ '{:,}'.format(latest.psa_10.twd) }}</div>
+      <div class="price-usd">≈ US${{ '{:,.0f}'.format(latest.psa_10.usd) }}</div>
+    {% else %}
+      <div class="price-twd na">— 無資料</div>
+      <div class="price-usd">目前無上架</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Chart -->
+{% if has_data %}
+<div class="chart-section">
+  <h2>價格走勢（台幣）</h2>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div> 品相 A</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> PSA 9</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> PSA 10</div>
+  </div>
+  <div class="chart-wrapper">
+    <canvas id="priceChart"></canvas>
+  </div>
+</div>
+{% else %}
+<div class="no-data-box">
+  <div class="icon">📊</div>
+  <h2>尚無歷史價格資料</h2>
+  <p>執行爬蟲後，此處將顯示折線走勢圖</p>
+  <code>python scraper.py</code>
+</div>
+{% endif %}
+
+{% if has_data %}
+<script>
+const dates = {{ dates | safe }};
+const conditionA = {{ condition_a | safe }};
+const psa9 = {{ psa_9 | safe }};
+const psa10 = {{ psa_10 | safe }};
+
+const ctx = document.getElementById('priceChart').getContext('2d');
+
+const commonDatasetOptions = {
+  borderWidth: 2.5,
+  pointRadius: 4,
+  pointHoverRadius: 7,
+  pointBorderWidth: 2,
+  tension: 0.35,
+  spanGaps: true,
+};
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: [
+      {
+        label: '品相 A（裸卡）',
+        data: conditionA,
+        borderColor: '#60a5fa',
+        backgroundColor: 'rgba(96,165,250,0.08)',
+        pointBackgroundColor: '#60a5fa',
+        pointBorderColor: '#0f0f1e',
+        fill: true,
+        ...commonDatasetOptions,
+      },
+      {
+        label: 'PSA 9',
+        data: psa9,
+        borderColor: '#34d399',
+        backgroundColor: 'rgba(52,211,153,0.08)',
+        pointBackgroundColor: '#34d399',
+        pointBorderColor: '#0f0f1e',
+        fill: true,
+        ...commonDatasetOptions,
+      },
+      {
+        label: 'PSA 10',
+        data: psa10,
+        borderColor: '#fbbf24',
+        backgroundColor: 'rgba(251,191,36,0.08)',
+        pointBackgroundColor: '#fbbf24',
+        pointBorderColor: '#0f0f1e',
+        fill: true,
+        ...commonDatasetOptions,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#12122a',
+        borderColor: '#2a2a4a',
+        borderWidth: 1,
+        titleColor: '#94a3b8',
+        bodyColor: '#e2e8f0',
+        padding: 12,
+        callbacks: {
+          label(ctx) {
+            const val = ctx.parsed.y;
+            if (val === null) return `${ctx.dataset.label}: 無資料`;
+            return `${ctx.dataset.label}: NT$${val.toLocaleString()}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+        ticks: { color: '#64748b', font: { size: 11 }, maxTicksLimit: 8 },
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+        ticks: {
+          color: '#64748b',
+          font: { size: 11 },
+          callback(val) { return 'NT$' + val.toLocaleString(); },
+        },
+      },
+    },
+  },
+});
+</script>
+{% endif %}
+{% endblock %}

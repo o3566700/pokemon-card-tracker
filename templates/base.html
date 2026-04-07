@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pokémon Card Tracker{% endblock %}</title>
+  <style>
+    :root {
+      --bg:          #080812;
+      --surface:     #0f0f1e;
+      --card-bg:     #141428;
+      --border:      #1e1e3a;
+      --border-glow: #3a3a6a;
+      --text:        #e2e8f0;
+      --text-dim:    #94a3b8;
+      --text-muted:  #4a5568;
+      --accent:      #fbbf24;
+      --accent-glow: rgba(251,191,36,0.15);
+      --blue:        #60a5fa;
+      --blue-glow:   rgba(96,165,250,0.15);
+      --green:       #34d399;
+      --green-glow:  rgba(52,211,153,0.15);
+      --gold:        #fbbf24;
+      --gold-glow:   rgba(251,191,36,0.15);
+      --red:         #f87171;
+      --radius:      12px;
+      --radius-lg:   18px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: rgba(8,8,18,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .nav-logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nav-logo .pokeball {
+      width: 24px; height: 24px;
+      background: linear-gradient(180deg, #ef4444 50%, #fff 50%);
+      border-radius: 50%;
+      border: 2.5px solid #1a1a2e;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .nav-logo .pokeball::after {
+      content: '';
+      position: absolute;
+      width: 8px; height: 8px;
+      background: #fff;
+      border: 2px solid #1a1a2e;
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-spacer { flex: 1; }
+    .nav-tag {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── UTILITIES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .badge-blue  { background: var(--blue-glow);  color: var(--blue);  border: 1px solid rgba(96,165,250,0.3);  }
+    .badge-green { background: var(--green-glow); color: var(--green); border: 1px solid rgba(52,211,153,0.3);  }
+    .badge-gold  { background: var(--gold-glow);  color: var(--gold);  border: 1px solid rgba(251,191,36,0.3);  }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="pokeball"></div>
+        Pokémon <span>Card Tracker</span>
+      </a>
+      <div class="nav-spacer"></div>
+      <div class="nav-tag">Powered by Snkrdunk</div>
+    </div>
+  </nav>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <footer>
+    資料來源：Snkrdunk &nbsp;·&nbsp; 價格僅供參考 &nbsp;·&nbsp; 每日早上 8:00 (台灣時間) 自動更新
+  </footer>
+</body>
+</html>
