@@ -542,5 +542,73 @@
       "usd": 267.0,
       "twd": 8467
     }
+  },
+  {
+    "date": "2026-04-15",
+    "card_id": 730956,
+    "card_name": "Pikachu ex SAR [M2a 234/193]",
+    "condition_a": {
+      "usd": 369.0,
+      "twd": 11646
+    },
+    "psa_9": {
+      "usd": 350.0,
+      "twd": 11046
+    },
+    "psa_10": {
+      "usd": 809.0,
+      "twd": 25532
+    }
+  },
+  {
+    "date": "2026-04-15",
+    "card_id": 704401,
+    "card_name": "MEGA Charizard X ex SAR [M2 110/080]",
+    "condition_a": {
+      "usd": 715.0,
+      "twd": 22565
+    },
+    "psa_9": {
+      "usd": 689.0,
+      "twd": 21745
+    },
+    "psa_10": {
+      "usd": 1205.0,
+      "twd": 38030
+    }
+  },
+  {
+    "date": "2026-04-15",
+    "card_id": 730954,
+    "card_name": "MEGA Dragonite ex MA [M2a 232/193]",
+    "condition_a": {
+      "usd": 33.0,
+      "twd": 1041
+    },
+    "psa_9": {
+      "usd": 33.0,
+      "twd": 1041
+    },
+    "psa_10": {
+      "usd": 121.0,
+      "twd": 3819
+    }
+  },
+  {
+    "date": "2026-04-15",
+    "card_id": 722239,
+    "card_name": "MEGA Charizard X ex MA [M2a 223/193]",
+    "condition_a": {
+      "usd": 64.0,
+      "twd": 2020
+    },
+    "psa_9": {
+      "usd": 73.0,
+      "twd": 2304
+    },
+    "psa_10": {
+      "usd": 271.0,
+      "twd": 8553
+    }
   }
 ]
