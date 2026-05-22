@@ -2234,5 +2234,37 @@
     "condition_a": null,
     "psa_9": null,
     "psa_10": null
+  },
+  {
+    "date": "2026-05-22",
+    "card_id": 730956,
+    "card_name": "Pikachu ex SAR [M2a 234/193]",
+    "condition_a": null,
+    "psa_9": null,
+    "psa_10": null
+  },
+  {
+    "date": "2026-05-22",
+    "card_id": 704401,
+    "card_name": "MEGA Charizard X ex SAR [M2 110/080]",
+    "condition_a": null,
+    "psa_9": null,
+    "psa_10": null
+  },
+  {
+    "date": "2026-05-22",
+    "card_id": 730954,
+    "card_name": "MEGA Dragonite ex MA [M2a 232/193]",
+    "condition_a": null,
+    "psa_9": null,
+    "psa_10": null
+  },
+  {
+    "date": "2026-05-22",
+    "card_id": 722239,
+    "card_name": "MEGA Charizard X ex MA [M2a 223/193]",
+    "condition_a": null,
+    "psa_9": null,
+    "psa_10": null
   }
 ]
